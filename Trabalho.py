@@ -1128,12 +1128,12 @@ def main():
     dado = criarDataSet()
     dadoRegional = criarDataSetRegional()
 
-    #obterVisualizacao(dado, dadoRegional)
-    #obterHistograma(dado, dadoRegional)
-    #plotCullenFrey(dado, dadoRegional)
+    obterVisualizacao(dado, dadoRegional)
+    obterHistograma(dado, dadoRegional)
+    plotCullenFrey(dado, dadoRegional)
     obterPDF(dado, dadoRegional)
-    #obterRegressaoLinear(dado, dadoRegional)
-    #obterGandSCurve(dado, dadoRegional)
-    #obterSOC()
+    obterRegressaoLinear(dado, dadoRegional)
+    obterGandSCurve(dado, dadoRegional)
+    obterSOC()
 
 main()
