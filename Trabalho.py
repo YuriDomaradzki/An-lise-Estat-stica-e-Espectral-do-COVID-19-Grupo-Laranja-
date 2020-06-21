@@ -382,31 +382,32 @@ def obterHistograma(dado, dadoRegional):
 
 ####################################################################### Criação e Plotagem dos PDF      
 
-def plotPDF(dadoPais, titulo, filename):
-    fig, ax = plt.subplots(1, 1)
-    scaler = MinMaxScaler(feature_range=(0, 1))
+def plotPDF(dadoPais, titulo, filename, country):
+    n, bins, patches = plt.hist(dadoPais, 60, density=1, facecolor='mediumseagreen', alpha=0.75, label="Normalized data")
+    x = range(len(dadoPais))
+    ymin = min(dadoPais)
+    ymax = max(dadoPais)
+    n = len(dadoPais)
+    ypoints = [(ymin + (i / n) * (ymax - ymin)) for i in range(0, n + 1)]
 
-    scaled_data = scaler.fit_transform(pd.DataFrame(dadoPais))
-    c = -0.1
+    # fit da GEV
+    mu, sigma = norm.fit(dadoPais)
+    rv_nrm = norm(loc=mu, scale=sigma)
+    gev_fit = genextreme.fit(dadoPais)  # estimando GEV
+    c, loc, scale = gev_fit
     mean, var, skew, kurt = genextreme.stats(c, moments='mvsk')
-    x = np.linspace(genextreme.ppf(0.01, c), genextreme.ppf(0.99, c), len(scaled_data))
+    rv_gev = genextreme(c, loc=loc, scale=scale)
+    gev_pdf = rv_gev.pdf(ypoints)  # criando dados a partir do GEV estimado para plotar
 
-    plt.style.use("ggplot")
-    ax.plot(x, genextreme.pdf(x, c), 'r-', lw=5, alpha=0.6, label='genextreme pdf')
+    plt.title("PDF with data from " + titulo + "\nmu={0:3.5}, sigma={1:3.5}".format(mu, sigma))
 
-    rv = genextreme(c)
-    ax.plot(x, rv.pdf(x), 'k-', lw=2, label='Normalized Data')
-
-    vals = genextreme.ppf([0.001, 0.5, 0.999], c)
-    resp = np.allclose([0.001, 0.5, 0.999], genextreme.cdf(vals, c))
-    r = genextreme.pdf(c, scaled_data)
-
-    plt.title("PDF with data from " + titulo)
-    ax.hist(scaled_data, bins='auto', ec="k", density=True, alpha=0.6, color='royalblue')
-    ax.legend(loc='best', frameon=False)
-    plt.xlabel('Value')
-    plt.ylabel('Probability Density')
-    plt.savefig('PDF/PDF ' + filename)
+    plt.plot(np.arange(min(bins), max(bins) + 1, (max(bins) - min(bins)) / len(dadoPais)), gev_pdf, 'orange', lw=5, alpha=0.6,
+             label='genextreme pdf')
+    n, bins, patches = plt.hist(dadoPais, 60, density=1, facecolor='mediumseagreen', alpha=0.75, label="Normalized data")
+    plt.ylabel("Probability density")
+    plt.xlabel("Value")
+    plt.legend()
+    plt.savefig("PDF/PDF" + filename)
     plt.show()
 
 
@@ -453,41 +454,42 @@ def obterPDF(dado, dadoRegional):
     TDEgypt = dadoEgypt['total_deaths'].values
     TTEgypt = dadoEgypt['total_tests'].values
 
-    plotPDF(NDCBrazil, 'Brazil New Daily Cases', "Brazil New Daily Cases.png")
-    plotPDF(NDCIndia, 'India New Daily Cases', "India New Daily Cases.png")
-    plotPDF(NDCIran, 'Iran New Daily Cases', "Iran New Daily Cases.png")
-    plotPDF(NDCAf, 'South Africa New Daily Cases', "South Africa New Daily Cases.png")
-    plotPDF(NDCEgypt, 'Egypt New Daily Cases', "Egypt New Daily Cases.png")
 
-    plotPDF(NDTBrazil, 'Brazil New Daily Tests', "Brazil New Daily Tests.png")
-    plotPDF(NDTIndia, 'India New Daily Tests', "India New Daily Tests.png")
-    plotPDF(NDTIran, 'Iran New Daily Tests', "Iran New Daily Tests.png")
-    plotPDF(NDTAf, 'South Africa New Daily Tests', "South Africa New Daily Tests.png")
-    plotPDF(NDTEgypt, 'Egypt New Daily Tests', "Egypt New Daily Tests.png")
+    plotPDF(NDCBrazil, 'Brazil New Daily Cases', "Brazil New Daily Cases.png", "Brazil")
+    plotPDF(NDCIndia, 'India New Daily Cases', "India New Daily Cases.png", "India")
+    plotPDF(NDCIran, 'Iran New Daily Cases', "Iran New Daily Cases.png", "Iran")
+    plotPDF(NDCAf, 'South Africa New Daily Cases', "South Africa New Daily Cases.png", "South Africa")
+    plotPDF(NDCEgypt, 'Egypt New Daily Cases', "Egypt New Daily Cases.png", "Egypt")
 
-    plotPDF(NDDBrazil, 'Brazil New Daily Deaths', "Brazil New Daily Deaths.png")
-    plotPDF(NDDIndia, 'India New Daily Deaths', "India New Daily Deaths.png")
-    plotPDF(NDDIran, 'Iran New Daily Deaths', "Iran New Daily Deaths.png")
-    plotPDF(NDDAf, 'South Africa New Daily Deaths', "South Africa New Daily Deaths.png")
-    plotPDF(NDDEgypt, 'Egypt New Daily Deaths', "Egypt New Daily Deaths.png")
+    #plotPDF(NDTBrazil, 'Brazil New Daily Tests', "Brazil New Daily Tests.png", "Brazil")
+    plotPDF(NDTIndia, 'India New Daily Tests', "India New Daily Tests.png", "India")
+    plotPDF(NDTIran, 'Iran New Daily Tests', "Iran New Daily Tests.png", "Iran")
+    plotPDF(NDTAf, 'South Africa New Daily Tests', "South Africa New Daily Tests.png", "South Africa")
+    #plotPDF(NDTEgypt, 'Egypt New Daily Tests', "Egypt New Daily Tests.png", "Egypt")
+    
+    #plotPDF(NDDBrazil, 'Brazil New Daily Deaths', "Brazil New Daily Deaths.png", "Brazil")
+    plotPDF(NDDIndia, 'India New Daily Deaths', "India New Daily Deaths.png", "India")
+    plotPDF(NDDIran, 'Iran New Daily Deaths', "Iran New Daily Deaths.png", "Iran")
+    #plotPDF(NDDAf, 'South Africa New Daily Deaths', "South Africa New Daily Deaths.png", "South Africa")
+    #plotPDF(NDDEgypt, 'Egypt New Daily Deaths', "Egypt New Daily Deaths.png", "Egypt")
 
-    plotPDF(TCBrazil, 'Brazil Total Cases', "Brazil Total Cases.png")
-    plotPDF(TCIndia, 'India Total Cases', "India TotalCases.png")
-    plotPDF(TCIran, 'Iran Total Cases', "Iran Total Cases.png")
-    plotPDF(TCAf, 'South Africa Total Cases', "South Africa Total Cases.png")
-    plotPDF(TCEgypt, 'Egypt Total Cases', "Egypt Total Cases.png")
+    plotPDF(TCBrazil, 'Brazil Total Cases', "Brazil Total Cases.png", "Brazil")
+    plotPDF(TCIndia, 'India Total Cases', "India TotalCases.png", "India")
+    plotPDF(TCIran, 'Iran Total Cases', "Iran Total Cases.png", "Iran")
+    plotPDF(TCAf, 'South Africa Total Cases', "South Africa Total Cases.png", "South Africa")
+    plotPDF(TCEgypt, 'Egypt Total Cases', "Egypt Total Cases.png", "Egypt")
 
-    plotPDF(TDBrazil, 'Brazil Total Deaths', "Brazil Total Deaths.png")
-    plotPDF(TDIndia, 'India Total Deaths', "India Total Deaths.png")
-    plotPDF(TDIran, 'Iran Total Deaths', "Iran Total Deaths.png")
-    plotPDF(TDAf, 'South Africa Total Deaths', "South Africa Total Deaths.png")
-    plotPDF(TDEgypt, 'Egypt Total Deaths', "Egypt Total Deaths.png")
+    plotPDF(TDBrazil, 'Brazil Total Deaths', "Brazil Total Deaths.png", "Brazil")
+    plotPDF(TDIndia, 'India Total Deaths', "India Total Deaths.png", "India")
+    plotPDF(TDIran, 'Iran Total Deaths', "Iran Total Deaths.png", "Iran")
+    plotPDF(TDAf, 'South Africa Total Deaths', "South Africa Total Deaths.png", "South Africa")
+    plotPDF(TDEgypt, 'Egypt Total Deaths', "Egypt Total Deaths.png", "Egypt")
 
-    plotPDF(TTBrazil, 'Brazil Total Tests', "Brazil Total Tests.png")
-    plotPDF(TTIndia, 'India Total Tests', "India Total Tests.png")
-    plotPDF(TTIran, 'Iran Total Tests', "Iran Total Tests.png")
-    plotPDF(TTAf, 'South Africa Total Tests', "South Africa Total Tests.png")
-    plotPDF(TTEgypt, 'Egypt Total Tests', "Egypt Total Tests.png")
+    plotPDF(TTBrazil, 'Brazil Total Tests', "Brazil Total Tests.png", "Brazil")
+    plotPDF(TTIndia, 'India Total Tests', "India Total Tests.png", "India")
+    plotPDF(TTIran, 'Iran Total Tests', "Iran Total Tests.png", "Iran")
+    plotPDF(TTAf, 'South Africa Total Tests', "South Africa Total Tests.png", "South Africa")
+    #plotPDF(TTEgypt, 'Egypt Total Tests', "Egypt Total Tests.png", "Egypt")
 
     ################################################################## DAS CIDADES REGIONAIS
 
@@ -503,17 +505,17 @@ def obterPDF(dado, dadoRegional):
     TCSp = dadoSp['casos'].values
     TDSp = dadoSp['obitos'].values
 
-    plotPDF(NDCSjc, 'São José dos Campos New Daily Cases', "São José dos Campos New Daily Cases.png")
-    plotPDF(NDCSp, 'São Paulo New Daily Cases', "São Paulo New Daily Cases.png")
+    #plotPDF(NDCSjc, 'São José dos Campos New Daily Cases', "São José dos Campos New Daily Cases.png", "São José dos Campos")
+    plotPDF(NDCSp, 'São Paulo New Daily Cases', "São Paulo New Daily Cases.png", "São Paulo")
 
-    plotPDF(NDDSjc, 'São José dos Campos New Daily Deaths', "São José dos Campos New Daily Deaths.png")
-    plotPDF(NDDSp, 'São Paulo New Daily Deaths', "São Paulo New Daily Deaths.png")
+    plotPDF(NDDSjc, 'São José dos Campos New Daily Deaths', "São José dos Campos New Daily Deaths.png", "São José dos Campos")
+    plotPDF(NDDSp, 'São Paulo New Daily Deaths', "São Paulo New Daily Deaths.png", "São Paulo")
 
-    plotPDF(TCSjc, 'São José dos Campos Total Cases', "São José dos Campos Total Cases.png")
-    plotPDF(TCSp, 'São Paulo Total Cases', "São Paulo Total Cases.png")
+    plotPDF(TCSjc, 'São José dos Campos Total Cases', "São José dos Campos Total Cases.png", "São José dos Campos")
+    plotPDF(TCSp, 'São Paulo Total Cases', "São Paulo Total Cases.png", "São Paulo")
 
-    plotPDF(TDSjc, 'São José dos Campos Total Deaths', "São José dos Campos Total Deaths.png")
-    plotPDF(TDSp, 'São Paulo Total Deaths', "São Paulo Total Deaths.png")
+    #plotPDF(TDSjc, 'São José dos Campos Total Deaths', "São José dos Campos Total Deaths.png", "São José dos Campos")
+    plotPDF(TDSp, 'São Paulo Total Deaths', "São Paulo Total Deaths.png", "São Paulo")
 
 
 ####################################################################### Criação e Plotagem da Regressão linear
@@ -1129,9 +1131,9 @@ def main():
     #obterVisualizacao(dado, dadoRegional)
     #obterHistograma(dado, dadoRegional)
     #plotCullenFrey(dado, dadoRegional)
-    #obterPDF(dado, dadoRegional)
+    obterPDF(dado, dadoRegional)
     #obterRegressaoLinear(dado, dadoRegional)
-    obterGandSCurve(dado, dadoRegional)
+    #obterGandSCurve(dado, dadoRegional)
     #obterSOC()
 
 main()
